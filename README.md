@@ -6,13 +6,15 @@ This is a tiny collection of tips for [Colorlight i5 FPGA board](https://github.
 
 [A trial litex-board platform/target definetions for colorlight i5](https://github.com/kazkojima/litex-boards/tree/colorlight_i5)
 
-[A trial litex adjustment for colorlight i5](https://github.com/kazkojima/litex/tree/colorlight_i5) which includes some new flash commands. These flash commands help you to clear block protection of spiflash which is set at shipment.
+[A trial litex adjustment for colorlight i5](https://github.com/kazkojima/litex/tree/colorlight_i5)
 
-![screenshot of LiteX BIOS](https://github.com/kazkojima/colorlight-i5-tips/images/flash-cmd-added.jpg)
+The latter includes some new flash commands. They help you to clear block protection of spiflash which is set at shipment.
+
+![screenshot of LiteX BIOS](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/flash-cmd-added.jpg)
 
 For LiteX, see [Quick start guide of LiteX](https://github.com/enjoy-digital/litex#quick-start-guide).
 
-Colorlight support can be added with replacing litex-board and litex with the above colorlight_i5 branches. After general setup,
+Colorlight support can be added with replacing litex-board and litex with the above colorlight_i5 branches. After the general setup,
 
 ```
 $ cd litex-boards/litex_boards/targets
@@ -23,11 +25,11 @@ will generate .v file in litex-boards/litex_boards/targets/build/colorlight_i5/g
 
 ## SDRAM
 
-[The original page](https://github.com/wuxx/Colorlight-FPGA-Projects#sdram-u18) says BA1 pin of SDRAM is connected to GND which means only 4MB enabled. It looks it isn't a case and is connected to C8 instead of GND.
+[The original page](https://github.com/wuxx/Colorlight-FPGA-Projects#sdram-u18) says BA1 pin of SDRAM is connected to GND which means only 4MB enabled. It looks it isn't a case and is connected to C8 instead of GND. Now all 8MB is available.
 
 ## SPIFLASH
 
-[The start guide](https://github.com/wuxx/Colorlight-FPGA-Projects/blob/master/get-start.md) says that the SPI-Flash on i5 modules is GD25Q16. You can free the lock with the new flash command added to LiteX BIOS.
+[The start guide](https://github.com/wuxx/Colorlight-FPGA-Projects/blob/master/get-start.md) says that the SPI-Flash on i5 modules GD25Q16, is locked. You can free the lock with the new flash command added to LiteX BIOS.
 
 ```
 litex> flash_write_protect 0
@@ -39,11 +41,11 @@ should clear all block protestion of GD25B16C flash chip. The modified .bit and 
 
 I've tested DIGILENT MicroSD PMOD successfully.
 
-![screenshot of LiteX BIOS](https://github.com/kazkojima/colorlight-i5-tips/images/uSD-pmod.jpg)
+![screenshot of LiteX BIOS](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/uSD-pmod.jpg)
 
 ## Ethernet
 
-I get nothing yet :-(
+I can get nothing yet :-(
 
 ## Reset switch
 
