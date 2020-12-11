@@ -1,0 +1,101 @@
+/dts-v1/;
+
+/ {
+	#address-cells = <0x01>;
+	#size-cells = <0x01>;
+
+	chosen {
+		bootargs = "mem=8M@0x40000000 rootwait console=liteuart earlycon=sbi root=/dev/mmcblk0p2 init=/bin/sh swiotlb=32";
+	};
+
+	cpus {
+		#address-cells = <0x01>;
+		#size-cells = <0x00>;
+		timebase-frequency = <50000000>;
+
+		cpu@0 {
+			clock-frequency = <50000000>;
+			compatible = "spinalhdl,vexriscv\0sifive,rocket0\0riscv";
+			d-cache-block-size = <0x40>;
+			d-cache-sets = <0x40>;
+			d-cache-size = <0x8000>;
+			d-tlb-sets = <0x01>;
+			d-tlb-size = <0x20>;
+			device_type = "cpu";
+			i-cache-block-size = <0x40>;
+			i-cache-sets = <0x40>;
+			i-cache-size = <0x8000>;
+			i-tlb-sets = <0x01>;
+			i-tlb-size = <0x20>;
+			mmu-type = "riscv,sv32";
+			reg = <0x00>;
+			riscv,isa = "rv32ima";
+			sifive,itim = <0x01>;
+			status = "okay";
+			tlb-split;
+			cpu0_intc: interrupt-controller {
+				#interrupt-cells = <1>;
+				compatible = "riscv,cpu-intc";
+				interrupt-controller;
+			};
+		};
+	};
+
+	memory@40000000 {
+		device_type = "memory";
+		reg = <0x40000000 0x7c0000>;
+	};
+
+	reserved-memory {
+		#address-cells = <0x01>;
+		#size-cells = <0x01>;
+		ranges;
+
+		vexriscv_emulator@407c0000 {
+			reg = <0x407c0000 0x4000>;
+		};
+	};
+
+	soc {
+		#address-cells = <0x01>;
+		#size-cells = <0x01>;
+		bus-frequency = <50000000>;
+		compatible = "simple-bus";
+		ranges;
+
+		interrupt-controller {
+			interrupt-controller;
+			#interrupt-cells = <0x01>;
+			compatible = "vexriscv,intc0";
+			status = "okay";
+		};
+
+		soc_controller@f0000000 {
+			compatible = "litex,soc_controller";
+			reg = <0xf0000000 0x0c>;
+			status = "okay";
+		};
+
+		serial@f0001000 {
+			device_type = "serial";
+			compatible = "litex,liteuart";
+			reg = <0xf0001000 0x100>;
+			status = "okay";
+		};
+
+		mmc@f0003800 {
+			compatible = "litex,mmc";
+			bus-width = <0x04>;
+			no-mmc;
+			reg = <0xf0003800 0x100
+			       0xf0004000 0x100
+			       0xf0004800 0x100
+			       0xf0005000 0x100>;
+			status = "okay";
+		};
+	};
+
+	aliases {
+		serial0 = "/soc/serial@f0001000";
+	};
+};

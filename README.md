@@ -133,4 +133,11 @@ The simple example like blinky works successfully, though it looks some litex dr
 
 ## linux-on-litex-vexriscv
 
-...
+Due to the 8MB memory limit, it's difficult to put the root filesystem on the RAM like other boards. Putting it on NFS or micro SD will be a good candidate.
+
+The latter, making the micro SD the root FS, is partially successful. Using the litex-vexriscv-rebase branch of [litex's linux tree](https://github.com/litex-hub/linux.git), [a tiny patch for mmc](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-litex-vexriscv-rebase-mmc.patch) and [.config](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/defconfig-colorlight-i5), [linux-on-litex-vexriscv](https://github.com/litex-hub/linux-on-litex-vexriscv)
+ with [colorlight i5 patch](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-on-litex-vexriscv-colorlight-i5.patch) has booted, though it's very slooooow.
+
+![screenshot of linux boot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/boot-on-sdcard.png)
+
+Too bad it doesn't work SDCard clock over 2MHz which causes "DMA timeout" errors ATM.

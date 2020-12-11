@@ -1,0 +1,36 @@
+diff --git a/drivers/mmc/host/litex_mmc.c b/drivers/mmc/host/litex_mmc.c
+index 10994f93585a..ff2ca8618e78 100644
+--- a/drivers/mmc/host/litex_mmc.c
++++ b/drivers/mmc/host/litex_mmc.c
+@@ -240,6 +240,11 @@ static int send_cmd(struct litex_mmc_host *host, u8 cmd, u32 arg,
+ 			return SD_TIMEOUT;
+ 		}
+ 
++#if 1
++	if (transfer == SDCARD_CTRL_DATA_TRANSFER_READ) {
++		asm(".word 0x500F");
++	}
++#endif
+ 	return status;
+ }
+ 
+@@ -545,7 +550,7 @@ static int litex_mmc_probe(struct platform_device *pdev)
+ 	}
+ 
+ 	mmc->caps = MMC_CAP_WAIT_WHILE_BUSY | MMC_CAP_DRIVER_TYPE_D;
+-	mmc->caps2 = MMC_CAP2_NO_SDIO | MMC_CAP2_FULL_PWR_CYCLE | MMC_CAP2_NO_WRITE_PROTECT;
++	mmc->caps2 = MMC_CAP2_NO_SDIO | MMC_CAP2_NO_MMC | MMC_CAP2_FULL_PWR_CYCLE | MMC_CAP2_NO_WRITE_PROTECT;
+ 	mmc->ops = &litex_mmc_ops;
+ 	mmc->ocr_avail = MMC_VDD_32_33 | MMC_VDD_33_34;
+ 
+@@ -555,8 +560,8 @@ static int litex_mmc_probe(struct platform_device *pdev)
+ 	mmc->max_blk_count = MAX_NR_BLOCKS;
+ 	mmc->max_req_size = mmc->max_blk_size * mmc->max_blk_count;
+ 
+-	mmc->f_min = 125 * 1e5; // sys_clk/256 is minimal frequency mmcm can produce, set minimal to 12.5Mhz on lower frequencies, sdcard sometimes do not initialize properly
+-	mmc->f_max = 50 * 1e6; // 50Mhz is max frequency sd card can support
++	mmc->f_min = 400e3;//125 * 1e5; // sys_clk/256 is minimal frequency mmcm can produce, set minimal to 12.5Mhz on lower frequencies, sdcard sometimes do not initialize properly
++	mmc->f_max = 1e6;//50 * 1e6; // 50Mhz is max frequency sd card can support
+ 
+ 	platform_set_drvdata(pdev, host);
+ 
