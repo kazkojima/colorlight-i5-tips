@@ -91,7 +91,7 @@ But this doesn't reset CPU. ???
 Currently I need a change generated .v file by hand:
 
 ```
-$ sed "s/assign main_cpu_reset = main_soccontroller_reset;/assign main_cpu_reset = main_soccontroller_reset | main_reset;/" colorlight_i5.v > /tmp/colorlight_i5.v
+$ sed "s/assign main_cpu_reset = main_soccontroller_reset;/assign main_cpu_reset = main_soccontroller_reset | (~cpu_reset_n);/" colorlight_i5.v > /tmp/colorlight_i5.v
 $ mv /tmp/colorlight_i5.v colorlight_i5.v
 ```
 
