@@ -15,7 +15,7 @@ though the 2nd one fails because the flash is protected in shipping. See SPIFLAS
 
 ## LiteX
 
-[A trial litex-board platform/target definetions for colorlight i5](https://github.com/kazkojima/litex-boards/tree/colorlight_i5)
+[A trial litex-board platform/target definitions for colorlight i5](https://github.com/kazkojima/litex-boards/tree/colorlight_i5)
 
 [A trial litex adjustment for colorlight i5](https://github.com/kazkojima/litex/tree/colorlight_i5)
 
@@ -53,7 +53,7 @@ will build .svf and .bin stream files.
 litex> flash_write_protect 0
 ```
 
-should clear all block protestion of GD25B16C flash chip. The modified .bit and .svf of LiteX are [here](https://github.com/kazkojima/colorlight-i5-tips/streams). If it works,
+should clear all block protection of GD25B16C flash chip. The modified .bit and .svf of LiteX are [here](https://github.com/kazkojima/colorlight-i5-tips/streams). If it works,
 
 ```
 litex> flash_erase
@@ -127,7 +127,7 @@ dts/riscv/riscv32-litex-vexriscv.dtsi
 boards/riscv/litex_vexriscv/litex_vexriscv.dts
 ```
 
-need to be modified for the changes in the configuration of the SoC, frequences and the address of the CSRs. colorlight_i5.py generates build/colorlight_i5/software/include/generated/csr.h which contains the CSR's address information when building SoC RTL.
+need to be modified for the changes in the configuration of the SoC, frequencies and the address of the CSRs. colorlight_i5.py generates build/colorlight_i5/software/include/generated/csr.h which contains the CSR's address information when building SoC RTL.
 
 The simple example like blinky works successfully, though it looks some litex drivers in zephyr are WIP and not full-featured.
 
