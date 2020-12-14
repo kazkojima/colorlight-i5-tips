@@ -41,10 +41,6 @@ $ /bin/sh ./build_colorlight_i5.sh
 
 will build .svf and .bin stream files.
 
-## SDRAM
-
-[The original page](https://github.com/wuxx/Colorlight-FPGA-Projects#sdram-u18) says BA1 pin of SDRAM is connected to GND which means only 4MB enabled. It looks it isn't the case and is connected to C8 instead of GND. Now all 8MB is available.
-
 ## SPIFLASH
 
 [The start guide](https://github.com/wuxx/Colorlight-FPGA-Projects/blob/master/get-start.md) says that the SPI-Flash on i5 modules GD25Q16, is locked. You can free the lock with the new flash command added to LiteX BIOS.
