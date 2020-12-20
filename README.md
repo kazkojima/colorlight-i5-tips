@@ -71,7 +71,32 @@ I've tested DIGILENT MicroSD PMOD successfully.
 
 ## Ethernet
 
-I can get nothing yet :-(
+Colorlight i5 has two Braodcom's B50612D gigabit ethernet transceiver chips. I made a simple extender with pulse transformer and RJ45 connector to test ethernet. i5ether directory includes KiCad files for it.
+
+![ethernet adaptor](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/i5ether-adaptor.jpg)
+
+netboot works with it, though a few tips are needed.
+
+B50612D datasheet says that the pin 41 of the chip PHYA[0] determines the PHY Address of B50612D. It seems that the chip connected to ETH2_* connecter pins has PHYA[0] = 0 and the LiteX ether MAC works with this PHY. ATM, the platform file defines this chip as the 2nd ether so as to match the connector pins.
+
+The build option "--eth-phy 1"will make ETH2_* pins the working ethernet port.
+
+```
+$ ./colorlight_i5.py --integrated-rom-size 0xc000 --l2-size 2048 --with-sdcard --with-ethernet --eth-phy 1
+```
+
+One another tip to get Ethernet working on your ColorLite i5.
+
+B50612D datasheet:
+"The RGMII transmit timing can be adjusted, if needed, by software or hardware control. The TXD to GTXCLK delay time can be increased by approximately 1.9 ns by setting bit 9 of register 1Ch, shadow value 00011."
+
+TXD to GTXCLK delay is enabled by default. It looks that the ethernet packets sent from colorlight can't be seen by the other hosts with it.  Disabling it with
+
+```
+litex> mdio_write 0 0x1c 0x8c00
+```
+
+![screenshot of netboot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/netboot.jpg)
 
 ## Reset switch
 
@@ -133,6 +158,9 @@ Due to the 8MB memory limit, it's difficult to put the root filesystem on the RA
 
 The latter, making the micro SD the root FS, is partially successful. Using the litex-vexriscv-rebase branch of [litex's linux tree](https://github.com/litex-hub/linux.git), [a tiny patch for mmc](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-litex-vexriscv-rebase-mmc.patch) and [.config](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/defconfig-colorlight-i5), [linux-on-litex-vexriscv](https://github.com/litex-hub/linux-on-litex-vexriscv)
  with [colorlight i5 patch](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-on-litex-vexriscv-colorlight-i5.patch) has booted, though it's very slooooow.
+
+Since we have only 8GB of memory, we need to change the memory map for the device table and emulator binaries. The patch in linux/ assumes rv32.dtb at 0x40780000 and emulator.bin at 0x407c0000.
+There is a boot.json file in linux/ that matches this change.
 
 ![screenshot of linux boot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/boot-on-sdcard.png)
 
