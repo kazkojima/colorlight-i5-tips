@@ -96,7 +96,7 @@ TXD to GTXCLK delay is enabled by default. It looks that the ethernet packets se
 litex> mdio_write 0 0x1c 0x8c00
 ```
 
-![screenshot of netboot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/netboot.jpg)
+![screenshot of netboot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/netboot.png)
 
 ## Reset switch
 
