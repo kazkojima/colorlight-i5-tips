@@ -25,7 +25,24 @@ The latter includes some new flash commands. They help you to clear block protec
 
 For LiteX, see [Quick start guide of LiteX](https://github.com/enjoy-digital/litex#quick-start-guide).
 
-Colorlight i5 support can be added with replacing litex-board and litex with the above colorlight_i5 branches. After the general setup,
+```
+$ wget https://raw.githubusercontent.com/enjoy-digital/litex/master/litex_setup.py
+$ chmod +x litex_setup.py
+$ ./litex_setup.py init install --user
+```
+
+should prepare the original LiteX tree.
+
+Colorlight i5 support can be added with replacing litex-board and litex with the above colorlight_i5 branches:
+
+```
+$ mv litex-boards litex-boards-upstream
+$ git clone https://github.com/kazkojima/litex-boards.git -b colorlight_i5
+$ mv litex litex-upstream
+$ git clone https://github.com/kazkojima/litex.git -b colorlight_i5
+```
+
+After these steps,
 
 ```
 $ cd litex-boards/litex_boards/targets
@@ -165,3 +182,14 @@ There is a boot.json file in linux/ that matches this change.
 ![screenshot of linux boot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/boot-on-sdcard.png)
 
 Too bad it doesn't work SDCard clock over 2MHz which causes "DMA timeout" errors ATM.
+
+### SDRAM issue on linux-on-litex-vexriscv HEAD
+
+The linux-on-litex-vexriscv HEAD has been changed to use the VexRiscV SMP core.
+After this change, colorlight-i5 has the SRRAM issue that the entire 32-bit is changed when writing bytes to SDRAM. For example, if 0x01 is written to 0x40000003 with byte write, the 32-bit word at 0x40000000 becomes 0x01010101. Oops.
+
+The colorlight-i5 is different from other boards in that the /we (DQM0-DQM3 pins of the EM638325 SDRAM) for each byte of the 32-bit wide SDRAM are all connected to GND, which may be a problem.
+I thought that access to SDRAM occurs on each cache line, so byte access does not occur.
+
+I'm using linux-on-litex-vexriscv commit 4a44b7244422c901e74a4729eaa770624ea5eea1 so as to avoid this issue.
+
