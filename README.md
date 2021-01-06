@@ -5,7 +5,7 @@ This is a tiny collection of tips for [Colorlight i5 FPGA board](https://github.
 ### Updates (Jan 6 2021)
 
 * Change the order of ethernet PHYs.
-* Add PHY configuration to BIOS.
+* Add a PHY configuration to BIOS.
 * Add a linux patch and .dts so as to enable the interrupt on the ethernet. 
 
 ## Quick start
@@ -121,7 +121,7 @@ litex> mdio_write 0 0x1c 0x8c00
 
 ![screenshot of netboot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/netboot.png)
 
-Now this is added to the board specific bios initialization. There is no need to do by hand. See the [litex-boards commit](https://github.com/kazkojima/litex-boards/commit/858b62292c69aa8452d939b01cabd68fab29449f) and the [litex commit](https://github.com/kazkojima/litex/commit/dd1009d3137074f0b2816b2644a6d930432210b2).
+Now it's added to the board specific bios initialization. There is no need to do it by hand. See the [litex-boards commit](https://github.com/kazkojima/litex-boards/commit/858b62292c69aa8452d939b01cabd68fab29449f) and the [litex commit](https://github.com/kazkojima/litex/commit/dd1009d3137074f0b2816b2644a6d930432210b2).
 
 ## Reset switch
 
@@ -193,7 +193,9 @@ Too bad it doesn't work SDCard clock over 2MHz which causes "DMA timeout" errors
 
 ### Ethernet interrupt
 
-Original litex ethernet driver uses polling instead of interrupt. The tiny ugly patch(https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-litex-vexriscv-rebase-eth-irq.patch) enables the ethernet interrupt, though it is NOT the right way to do it. The corresponding DT source is [here](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/rv32-eth.dts).
+The original litex ethernet driver uses polling instead of interrupt. The tiny ugly patch(https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-litex-vexriscv-rebase-eth-irq.patch) enables the ethernet interrupt, though it is NOT the right way to do it. The corresponding DT source is [here](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/rv32-eth.dts).
+
+linux-on-litex-vexriscv HEAD has the SDRAM issue on colorlight-i5. See the following section for detail. Although linux-on-litex-vexriscv commit 4a44b7244422c901e74a4729eaa770624ea5eea1 has no SDRAM issue, I had to manually [modify the generated verilog](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/top.v-ethernet-irq.patch) to enable the Ethernet interrupt on that. I'm not sure why this change is needed.
 
 ### SDRAM issue on linux-on-litex-vexriscv HEAD
 

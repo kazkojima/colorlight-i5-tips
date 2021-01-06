@@ -1,0 +1,20 @@
+--- top.v~	2021-01-05 11:46:11.209056656 +0900
++++ top.v	2021-01-05 11:48:01.004151814 +0900
+@@ -4889,7 +4889,7 @@ always @(*) begin
+ 		main_ethmac_writer_available_clear <= 1'd1;
+ 	end
+ end
+-assign main_ethmac_writer_irq = (main_ethmac_writer_pending_status & main_ethmac_writer_enable_storage);
++assign main_ethmac_writer_irq = (main_ethmac_writer_pending_status);
+ assign main_ethmac_writer_available_status = main_ethmac_writer_available_trigger;
+ assign main_ethmac_writer_available_pending = main_ethmac_writer_available_trigger;
+ assign main_ethmac_writer_fifo_syncfifo_din = {main_ethmac_writer_fifo_fifo_in_last, main_ethmac_writer_fifo_fifo_in_first, main_ethmac_writer_fifo_fifo_in_payload_length, main_ethmac_writer_fifo_fifo_in_payload_slot};
+@@ -5036,7 +5036,7 @@ always @(*) begin
+ 		main_ethmac_reader_done_clear <= 1'd1;
+ 	end
+ end
+-assign main_ethmac_reader_irq = (main_ethmac_reader_pending_status & main_ethmac_reader_enable_storage);
++assign main_ethmac_reader_irq = (main_ethmac_reader_pending_status);
+ assign main_ethmac_reader_done_status = 1'd0;
+ assign main_ethmac_reader_fifo_syncfifo_din = {main_ethmac_reader_fifo_fifo_in_last, main_ethmac_reader_fifo_fifo_in_first, main_ethmac_reader_fifo_fifo_in_payload_length, main_ethmac_reader_fifo_fifo_in_payload_slot};
+ assign {main_ethmac_reader_fifo_fifo_out_last, main_ethmac_reader_fifo_fifo_out_first, main_ethmac_reader_fifo_fifo_out_payload_length, main_ethmac_reader_fifo_fifo_out_payload_slot} = main_ethmac_reader_fifo_syncfifo_dout;
