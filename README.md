@@ -94,12 +94,12 @@ Colorlight i5 has two Braodcom's B50612D gigabit ethernet transceiver chips. I m
 
 netboot works with it, though a few tips are needed.
 
-B50612D datasheet says that the pin 41 of the chip PHYA[0] determines the PHY Address of B50612D. It seems that the chip connected to ETH2_* connecter pins has PHYA[0] = 0 and the LiteX ether MAC works with this PHY. ATM, the platform file defines this chip as the 2nd ether so as to match the connector pins.
+B50612D datasheet says that the pin 41 of the chip PHYA[0] determines the PHY Address of B50612D. It seems that the chip connected to ETH2_* connecter pins has PHYA[0] = 0 and the LiteX ether MAC works with this PHY. ~~ATM, the platform file defines this chip as the 2nd ether so as to match the connector pins.~~ The order of the two PHYs is swapped with the naming of the connectors on the board so to match with the configuration of their PHYA[0] pins. The default is "--eth-phy 0".
 
-The build option "--eth-phy 1"will make ETH2_* pins the working ethernet port.
+~~The build option "--eth-phy 1" will make ETH2_* pins the working ethernet port.~~
 
 ```
-$ ./colorlight_i5.py --integrated-rom-size 0xc000 --l2-size 2048 --with-sdcard --with-ethernet --eth-phy 1
+$ ./colorlight_i5.py --integrated-rom-size 0xc000 --l2-size 2048 --with-sdcard --with-ethernet
 ```
 
 One another tip to get Ethernet working on your ColorLite i5.
@@ -114,6 +114,8 @@ litex> mdio_write 0 0x1c 0x8c00
 ```
 
 ![screenshot of netboot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/netboot.png)
+
+Now this is added to the board specific bios initialization. There is no need to do by hand. See the [litex-boards commit](https://github.com/kazkojima/litex-boards/commit/858b62292c69aa8452d939b01cabd68fab29449f) and the [litex commit](https://github.com/kazkojima/litex/commit/dd1009d3137074f0b2816b2644a6d930432210b2).
 
 ## Reset switch
 
