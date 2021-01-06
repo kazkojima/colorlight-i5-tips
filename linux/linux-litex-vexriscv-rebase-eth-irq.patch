@@ -1,0 +1,118 @@
+diff --git a/arch/riscv/Kconfig b/arch/riscv/Kconfig
+index 0cbbe6646522..26582be77632 100644
+--- a/arch/riscv/Kconfig
++++ b/arch/riscv/Kconfig
+@@ -25,7 +25,7 @@ config RISCV
+ 	select ARCH_HAS_PTE_SPECIAL
+ 	select ARCH_HAS_SET_DIRECT_MAP
+ 	select ARCH_HAS_SET_MEMORY
+-	select ARCH_HAS_STRICT_KERNEL_RWX if MMU
++#	select ARCH_HAS_STRICT_KERNEL_RWX if MMU
+ 	select ARCH_OPTIONAL_KERNEL_RWX if ARCH_HAS_STRICT_KERNEL_RWX
+ 	select ARCH_OPTIONAL_KERNEL_RWX_DEFAULT
+ 	select ARCH_WANT_DEFAULT_TOPDOWN_MMAP_LAYOUT if MMU
+diff --git a/drivers/irqchip/irq-litex-vexriscv.c b/drivers/irqchip/irq-litex-vexriscv.c
+index a4fe688dd819..4b0c20788ffd 100644
+--- a/drivers/irqchip/irq-litex-vexriscv.c
++++ b/drivers/irqchip/irq-litex-vexriscv.c
+@@ -84,6 +84,7 @@ static void litex_vexriscv_intc_mask(struct irq_data *data)
+ 
+ 	if (!mask)
+ 		litex_vexriscv_irq_setie(0);
++	csr_clear(CSR_IE, IE_EIE);
+ }
+ 
+ static void litex_vexriscv_intc_unmask(struct irq_data *data)
+@@ -98,6 +99,7 @@ static void litex_vexriscv_intc_unmask(struct irq_data *data)
+ 
+ 	if (!litex_vexriscv_irq_getie())
+ 		litex_vexriscv_irq_setie(1);
++	csr_set(CSR_IE, IE_EIE);
+ }
+ 
+ static void litex_vexriscv_intc_ack(struct irq_data *data)
+@@ -105,7 +107,9 @@ static void litex_vexriscv_intc_ack(struct irq_data *data)
+ 	/* no need to ack IRQs */
+ }
+ 
+-static void litex_vexriscv_intc_handle_irq(struct pt_regs *regs)
++extern void handle_liteeth_irq(unsigned int i);
++
++void litex_vexriscv_intc_handle_irq(struct pt_regs *regs)
+ {
+ 	unsigned int irq;
+ 	int i;
+@@ -120,7 +124,10 @@ static void litex_vexriscv_intc_handle_irq(struct pt_regs *regs)
+ 
+ 		if (irq & BIT(i)) {
+ 			pr_debug("irqchip: handling at i = %d\n", i);
+-			handle_domain_irq(root_domain, i, regs);
++			if (i == 2)
++				handle_liteeth_irq(i);
++			else
++				handle_domain_irq(root_domain, i, regs);
+ 		}
+ 	}
+ }
+@@ -151,7 +158,7 @@ static int __init litex_vexriscv_intc_init(struct device_node *node, struct devi
+ 					    &litex_vexriscv_domain_ops,
+ 					    &litex_vexriscv_intc0);
+ 	irq_set_default_host(root_domain);
+-	set_handle_irq(litex_vexriscv_intc_handle_irq);
++	//set_handle_irq(litex_vexriscv_intc_handle_irq);
+ 
+ 	/* print device info */
+ 	pr_info("irqchip: LiteX VexRiscv irqchip driver initialized. "
+diff --git a/drivers/irqchip/irq-riscv-intc.c b/drivers/irqchip/irq-riscv-intc.c
+index 8017f6d32d52..5835c3e6056b 100644
+--- a/drivers/irqchip/irq-riscv-intc.c
++++ b/drivers/irqchip/irq-riscv-intc.c
+@@ -19,6 +19,10 @@
+ 
+ static struct irq_domain *intc_domain;
+ 
++#ifdef CONFIG_LITEX_VEXRISCV_INTC
++extern void litex_vexriscv_intc_handle_irq(struct pt_regs *regs);
++#endif
++
+ static asmlinkage void riscv_intc_irq(struct pt_regs *regs)
+ {
+ 	unsigned long cause = regs->cause & ~CAUSE_IRQ_FLAG;
+@@ -35,6 +39,11 @@ static asmlinkage void riscv_intc_irq(struct pt_regs *regs)
+ 		 */
+ 		handle_IPI(regs);
+ 		break;
++#endif
++#ifdef CONFIG_LITEX_VEXRISCV_INTC
++	case RV_IRQ_EXT:
++		litex_vexriscv_intc_handle_irq(regs);
++		break;
+ #endif
+ 	default:
+ 		handle_domain_irq(intc_domain, cause, regs);
+diff --git a/drivers/net/ethernet/litex/litex_liteeth.c b/drivers/net/ethernet/litex/litex_liteeth.c
+index 67b2f034f83a..9fb78b81d7f0 100644
+--- a/drivers/net/ethernet/litex/litex_liteeth.c
++++ b/drivers/net/ethernet/litex/litex_liteeth.c
+@@ -154,6 +154,12 @@ static irqreturn_t liteeth_interrupt(int irq, void *dev_id)
+ 	return IRQ_HANDLED;
+ }
+ 
++static void *liteeth_devid;
++void handle_liteeth_irq(unsigned int irq)
++{
++	liteeth_interrupt(irq, liteeth_devid);
++}
++
+ static void liteeh_timeout(struct timer_list *t)
+ {
+ 	struct liteeth *priv = from_timer(priv, t, poll_timer);
+@@ -167,6 +173,8 @@ static int liteeth_open(struct net_device *netdev)
+ 	struct liteeth *priv = netdev_priv(netdev);
+ 	int err;
+ 
++	liteeth_devid = netdev;
++
+ 	/* TODO: Remove these once we have working mdio support */
+ 	priv->cur_duplex = DUPLEX_FULL;
+ 	priv->cur_speed = SPEED_100;

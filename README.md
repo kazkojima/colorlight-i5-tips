@@ -2,6 +2,12 @@
 
 This is a tiny collection of tips for [Colorlight i5 FPGA board](https://github.com/wuxx/Colorlight-FPGA-Projects).
 
+### Updates (Jan 6 2021)
+
+* Change the order of ethernet PHYs.
+* Add PHY configuration to BIOS.
+* Add a linux patch and .dts so as to enable the interrupt on the ethernet. 
+
 ## Quick start
 
 See [get-start](https://github.com/wuxx/Colorlight-FPGA-Projects/blob/master/get-start.md) of the above original site. The board has the CMSIS-DAP link for debug and serial port. The site gives the "dapprog" which is a wrapper script of OpenOCD for convenience.
@@ -184,6 +190,10 @@ There is a boot.json file in linux/ that matches this change.
 ![screenshot of linux boot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/boot-on-sdcard.png)
 
 Too bad it doesn't work SDCard clock over 2MHz which causes "DMA timeout" errors ATM.
+
+### Ethernet interrupt
+
+Original litex ethernet driver uses polling instead of interrupt. The tiny ugly patch(https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-litex-vexriscv-rebase-eth-irq.patch) enables the ethernet interrupt, though it is NOT the right way to do it. The corresponding DT source is [here](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/rv32-eth.dts).
 
 ### SDRAM issue on linux-on-litex-vexriscv HEAD
 
