@@ -2,6 +2,10 @@
 
 This is a tiny collection of tips for [Colorlight i5 FPGA board](https://github.com/wuxx/Colorlight-FPGA-Projects).
 
+### Updates (Jan 15 2021)
+
+* Fix initial builds.
+
 ### Updates (Jan 6 2021)
 
 * Change the order of ethernet PHYs.

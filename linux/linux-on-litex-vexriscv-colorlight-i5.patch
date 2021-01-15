@@ -32,10 +32,10 @@ index fd4deed..e3966ce 100644
  #define max(a,b) \
    ({ __typeof__ (a) _a = (a); \
 diff --git a/make.py b/make.py
-index 5164438..26d4a83 100755
+index 5164438..92f894b 100755
 --- a/make.py
 +++ b/make.py
-@@ -273,6 +273,39 @@ class ULX3S(Board):
+@@ -273,6 +273,41 @@ class ULX3S(Board):
              "spisdcard",
          }, bitstream_ext=".svf")
  
@@ -67,6 +67,8 @@ index 5164438..26d4a83 100755
 +            # Buses
 +            #"spi",
 +        }, bitstream_ext=".svf")
++        os.makedirs(os.path.join("build/colorlight/software", "include/generated"),
++                    exist_ok=True)
 +        write_to_file(
 +            os.path.join("build/colorlight/software/include/generated/target.h"),
 +            "// Colorlight i5 needs this to disable TX data to clock delay.\n"
@@ -75,7 +77,7 @@ index 5164438..26d4a83 100755
  # HADBadge support ---------------------------------------------------------------------------------
  
  class HADBadge(Board):
-@@ -437,6 +470,7 @@ supported_boards = {
+@@ -437,6 +472,7 @@ supported_boards = {
      "camlink_4k":   CamLink4K,
      "trellisboard": TrellisBoard,
      "ecpix5":       ECPIX5,
@@ -83,7 +85,7 @@ index 5164438..26d4a83 100755
  
      # Altera/Intel
      "de0nano":      De0Nano,
-@@ -499,11 +533,16 @@ def main():
+@@ -499,11 +535,16 @@ def main():
          if board_name in ["arty", "arty_a7"]:
              from litex_boards.platforms.arty import _sdcard_pmod_io
              board.platform.add_extension(_sdcard_pmod_io)
