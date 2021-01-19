@@ -191,7 +191,7 @@ I've pushed [zephyr-rtos branch with modified DTS and default configs for colorl
 
 You can try net samples with it.
 
-![screenshot of samples/net/telnet]https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/telnet-app.png
+![screenshot of samples/net/telnet](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/telnet-app.png)
 
 ## linux-on-litex-vexriscv
 
