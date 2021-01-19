@@ -187,7 +187,7 @@ The simple example like blinky works successfully, though it looks some litex dr
 
 #### Updates for Zephyr
 
-I've pushed [zephyr-rtos branch with modified DTS and default configs for colorlight-i5](https://github.com/kazkojima/litex-boards/tree/colorlight_i5) which includes DTS/defconfig changes.
+I've pushed [zephyr-rtos branch with modified DTS and default configs for colorlight-i5](https://github.com/kazkojima/litex-boards/tree/colorlight_i5).
 
 You can try net samples with it.
 
