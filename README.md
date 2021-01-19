@@ -2,6 +2,10 @@
 
 This is a tiny collection of tips for [Colorlight i5 FPGA board](https://github.com/wuxx/Colorlight-FPGA-Projects).
 
+### Updates (Jan 19 2021)
+
+* Add about forked Zephyr OS with colorlight_i5 branch.
+
 ### Updates (Jan 15 2021)
 
 * Fix initial builds.
@@ -167,7 +171,7 @@ if you have installed Anaconda.
 Zephyr's Litex-vexrisc support expects 8-bit CSRs as well as linux. OTOH LiteX produces a 32-bit CSR SoC by default, so that needs to be changed with --csr-data-width 8 option.
 
 ```
-$ ./colorlight_i5.py --with-sdcard --with-spi --integrated-rom-size 0xc000 --l2-size 2048 --csr-data-width 8
+$ ./colorlight_i5.py --with-sdcard --with-ethernet --integrated-rom-size 0xc000 --l2-size 2048 --csr-data-width 8
 ```
 
 Also 2 DT-related zephyr's files
@@ -180,6 +184,14 @@ boards/riscv/litex_vexriscv/litex_vexriscv.dts
 need to be modified for the changes in the configuration of the SoC, frequencies and the address of the CSRs. colorlight_i5.py generates build/colorlight_i5/software/include/generated/csr.h which contains the CSR's address information when building SoC RTL.
 
 The simple example like blinky works successfully, though it looks some litex drivers in zephyr are WIP and not full-featured.
+
+#### Updates for Zephyr
+
+I've pushed [zephyr-rtos branch with modified DTS and default configs for colorlight-i5](https://github.com/kazkojima/litex-boards/tree/colorlight_i5) which includes DTS/defconfig changes.
+
+You can try net samples with it.
+
+![screenshot of samples/net/telnet]https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/telnet-app.png
 
 ## linux-on-litex-vexriscv
 
