@@ -2,6 +2,7 @@
 
 This is a tiny collection of tips for [Colorlight i5 FPGA board](https://github.com/wuxx/Colorlight-FPGA-Projects).
 
+
 ### Updates (Jan 19 2021)
 
 * Add about forked Zephyr OS with colorlight_i5 branch.
@@ -18,14 +19,16 @@ This is a tiny collection of tips for [Colorlight i5 FPGA board](https://github.
 
 ## Quick start
 
-See [get-start](https://github.com/wuxx/Colorlight-FPGA-Projects/blob/master/get-start.md) of the above original site. The board has the CMSIS-DAP link for debug and serial port. The site gives the "dapprog" which is a wrapper script of OpenOCD for convenience.
+See [Tom Verbeure's great article](https://tomverbeure.github.io/2021/01/22/The-Colorlight-i5-as-FPGA-development-board.html) first. It's a complete guide for the board and its environment ATM.
+
+See also [get-start](https://github.com/wuxx/Colorlight-FPGA-Projects/blob/master/get-start.md) of the above original site. The board has the CMSIS-DAP link for debug and serial port. The site gives the "dapprog" which is a wrapper script of OpenOCD for convenience.
 
 ```
 $ ./dapprog xxx.svf # Configure with xxx.svf
 $ ./dapprog xxx.bit # Write configuration to the flash
 ```
 
-though the 2nd one fails because the flash is protected in shipping. See SPIFLASH below.
+though the 2nd one fails because the flash is protected in shipping. See SPIFLASH below. If you follows the Tom's article, this problem can be avoided with "ecpdap".
 
 ## LiteX
 
@@ -74,7 +77,7 @@ will build .svf and .bin stream files.
 
 ## SPIFLASH
 
-[The start guide](https://github.com/wuxx/Colorlight-FPGA-Projects/blob/master/get-start.md) says that the SPI-Flash on i5 modules GD25Q16, is locked. You can free the lock with the new flash command added to LiteX BIOS.
+[The start guide](https://github.com/wuxx/Colorlight-FPGA-Projects/blob/master/get-start.md) says that the SPI-Flash on i5 modules GD25Q16, is locked. You can free the lock with ecpdap or the new flash command added to LiteX BIOS.
 
 ```
 litex> flash_write_protect 0
