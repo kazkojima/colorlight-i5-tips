@@ -3,20 +3,6 @@
 This is a tiny collection of tips for [Colorlight i5 FPGA board](https://github.com/wuxx/Colorlight-FPGA-Projects).
 
 
-### Updates (Jan 19 2021)
-
-* Add about forked Zephyr OS with colorlight_i5 branch.
-
-### Updates (Jan 15 2021)
-
-* Fix initial builds.
-
-### Updates (Jan 6 2021)
-
-* Change the order of ethernet PHYs.
-* Add a PHY configuration to BIOS.
-* Add a linux patch and .dts so as to enable the interrupt on the ethernet. 
-
 ## Quick start
 
 See [Tom Verbeure's great article](https://tomverbeure.github.io/2021/01/22/The-Colorlight-i5-as-FPGA-development-board.html) first. It's a complete guide for the board and its environment ATM.
@@ -134,24 +120,6 @@ litex> mdio_write 0 0x1c 0x8c00
 
 Now it's added to the board specific bios initialization. There is no need to do it by hand. See the [litex-boards commit](https://github.com/kazkojima/litex-boards/commit/858b62292c69aa8452d939b01cabd68fab29449f) and the [litex commit](https://github.com/kazkojima/litex/commit/dd1009d3137074f0b2816b2644a6d930432210b2).
 
-## Reset switch
-
-I've defined reset button as K18 pin
-
-```
-    # Reset button
-    ("cpu_reset_n", 0, Pins("K18"), IOStandard("LVCMOS33"), Misc("PULLMODE=UP")),
-```
-
-But this doesn't reset CPU. ???
-
-Currently I need a change generated .v file by hand:
-
-```
-$ sed "s/assign main_cpu_reset = main_soccontroller_reset;/assign main_cpu_reset = main_soccontroller_reset | (~cpu_reset_n);/" colorlight_i5.v > /tmp/colorlight_i5.v
-$ mv /tmp/colorlight_i5.v colorlight_i5.v
-```
-
 ## Zephyr
 
 Links:
@@ -203,7 +171,7 @@ Due to the 8MB memory limit, it's difficult to put the root filesystem on the RA
 The latter, making the micro SD the root FS, is partially successful. Using the litex-vexriscv-rebase branch of [litex's linux tree](https://github.com/litex-hub/linux.git), [a tiny patch for mmc](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-litex-vexriscv-rebase-mmc.patch) and [.config](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/defconfig-colorlight-i5), [linux-on-litex-vexriscv](https://github.com/litex-hub/linux-on-litex-vexriscv)
  with [colorlight i5 patch](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-on-litex-vexriscv-colorlight-i5.patch) has booted, though it's very slooooow.
 
-Since we have only 8GB of memory, we need to change the memory map for the device table and emulator binaries. The patch in linux/ assumes rv32.dtb at 0x40780000 and emulator.bin at 0x407c0000.
+Since we have only 8GB of memory, we need to change the memory map for the device table and emulator binaries. The patch in linux/ assumes rv32.dtb at 0x40780000 and opensbi.bin at 0x407c0000.
 There is a boot.json file in linux/ that matches this change.
 
 ![screenshot of linux boot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/boot-on-sdcard.png)
@@ -212,17 +180,30 @@ Too bad it doesn't work SDCard clock over 2MHz which causes "DMA timeout" errors
 
 ### Ethernet interrupt
 
-The original litex ethernet driver uses polling instead of interrupt. The tiny ugly patch(https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-litex-vexriscv-rebase-eth-irq.patch) enables the ethernet interrupt, though it is NOT the right way to do it. The corresponding DT source is [here](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/rv32-eth.dts).
+DT for ethernet is [here](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/rv32-eth.dts). linux-on-litex-vexriscv HEAD is assumed.
 
-linux-on-litex-vexriscv HEAD has the SDRAM issue on colorlight-i5. See the following section for detail. Although linux-on-litex-vexriscv commit 4a44b7244422c901e74a4729eaa770624ea5eea1 has no SDRAM issue, I had to manually [modify the generated verilog](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/top.v-ethernet-irq.patch) to enable the Ethernet interrupt on that. I'm not sure why this change is needed.
+~~### SDRAM issue on linux-on-litex-vexriscv HEAD~~
 
-### SDRAM issue on linux-on-litex-vexriscv HEAD
+This is solved with [commit dee4331](https://github.com/litex-hub/linux-on-litex-vexriscv/commit/dee4331dc39124bca37f8f765ac20184ad447ae4)!
 
-The linux-on-litex-vexriscv HEAD has been changed to use the VexRiscV SMP core.
-After this change, colorlight-i5 has the SRRAM issue that the entire 32-bit is changed when writing bytes to SDRAM. For example, if 0x01 is written to 0x40000003 with byte write, the 32-bit word at 0x40000000 becomes 0x01010101. Oops.
+## History
 
-The colorlight-i5 is different from other boards in that the /we (DQM0-DQM3 pins of the EM638325 SDRAM) for each byte of the 32-bit wide SDRAM are all connected to GND, which may be a problem.
-I thought that access to SDRAM occurs on each cache line, so byte access does not occur.
+### Updates (Jan 27 2021)
 
-I'm using linux-on-litex-vexriscv commit 4a44b7244422c901e74a4729eaa770624ea5eea1 so as to avoid this issue.
+* Adjust for linux-on-litex-vexriscv HEAD.
+* Remove 'Reset switch' section.
+
+### Updates (Jan 19 2021)
+
+* Add about forked Zephyr OS with colorlight_i5 branch.
+
+### Updates (Jan 15 2021)
+
+* Fix initial builds.
+
+### Updates (Jan 6 2021)
+
+* Change the order of ethernet PHYs.
+* Add a PHY configuration to BIOS.
+* Add a linux patch and .dts so as to enable the interrupt on the ethernet. 
 

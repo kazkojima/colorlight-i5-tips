@@ -1,54 +1,21 @@
-diff --git a/emulator/linker.ld b/emulator/linker.ld
-index 9bfe117..b0a8800 100644
---- a/emulator/linker.ld
-+++ b/emulator/linker.ld
-@@ -3,7 +3,14 @@ ENTRY(_start)
- 
- __DYNAMIC = 0;
- 
--INCLUDE generated/regions.ld
-+/* INCLUDE generated/regions.ld */
-+MEMORY {
-+	rom : ORIGIN = 0x00000000, LENGTH = 0x0000a000
-+	sram : ORIGIN = 0x10000000, LENGTH = 0x00002000
-+	main_ram : ORIGIN = 0x40000000, LENGTH = 0x00780000
-+	emulator : ORIGIN = 0x407c0000, LENGTH = 0x00004000
-+	csr : ORIGIN = 0xf0000000, LENGTH = 0x00010000
-+}
- 
- SECTIONS
- {
-diff --git a/emulator/main.c b/emulator/main.c
-index fd4deed..e3966ce 100644
---- a/emulator/main.c
-+++ b/emulator/main.c
-@@ -14,7 +14,7 @@
- #include "riscv.h"
- 
- #define LINUX_IMAGE_BASE MAIN_RAM_BASE + 0x00000000
--#define LINUX_DTB_BASE   MAIN_RAM_BASE + 0x01000000
-+#define LINUX_DTB_BASE   MAIN_RAM_BASE + 0x00780000
- 
- #define max(a,b) \
-   ({ __typeof__ (a) _a = (a); \
 diff --git a/make.py b/make.py
-index 5164438..92f894b 100755
+index eb275af..5e683c3 100755
 --- a/make.py
 +++ b/make.py
-@@ -273,6 +273,41 @@ class ULX3S(Board):
-             "spisdcard",
+@@ -357,6 +357,32 @@ class ECPIX5(Board):
+             "sdcard",
          }, bitstream_ext=".svf")
  
-+# Colorlight support ------------------------------------------------------------------------------------
++# Colorlight i5 support ------------------------------------------------------------------------------------
 +
-+class Colorlight(Board):
++class Colorlight_i5(Board):
 +    SPIFLASH_PAGE_SIZE    = 256
 +    SPIFLASH_SECTOR_SIZE  = 4*kB
 +    SPIFLASH_DUMMY_CYCLES = 8
 +    soc_kwargs = {
 +        "sys_clk_freq": int(50e6),     # 48MHz default.
-+        "l2_size":	2048,          # Reduce l2_size (Not enough blockrams).
 +        "integrated_rom_size": 0xa000, # Reduce integrated_rom_size.
++        "l2_size"    :  2048, # Use Wishbone and L2 for memory accesses.
 +        "uart_baudrate": 115.2e3,
 +    }
 +    def __init__(self):
@@ -58,65 +25,21 @@ index 5164438..92f894b 100755
 +            # Communication
 +            "serial",
 +            "ethernet",
-+            # Storage
-+            #"sdcard",
-+            #"spiflash",
-+            #"spisdcard",
-+            # GPIOs
-+            #"leds",
-+            # Buses
-+            #"spi",
 +        }, bitstream_ext=".svf")
-+        os.makedirs(os.path.join("build/colorlight/software", "include/generated"),
-+                    exist_ok=True)
-+        write_to_file(
-+            os.path.join("build/colorlight/software/include/generated/target.h"),
++        tdir = os.path.join("build/colorlight_i5/software", "include/generated")
++        os.makedirs(tdir, exist_ok=True)
++        write_to_file(os.path.join(tdir, "target.h"),
 +            "// Colorlight i5 needs this to disable TX data to clock delay.\n"
 +	    "#define TARGET_BIOS_INIT_FUNC() mdio_write(0, 0x1c, 0x8c00)")
 +
- # HADBadge support ---------------------------------------------------------------------------------
- 
- class HADBadge(Board):
-@@ -437,6 +472,7 @@ supported_boards = {
+ #---------------------------------------------------------------------------------------------------
+ # Intel Boards
+ #---------------------------------------------------------------------------------------------------
+@@ -450,6 +476,7 @@ supported_boards = {
      "camlink_4k":   CamLink4K,
      "trellisboard": TrellisBoard,
      "ecpix5":       ECPIX5,
-+    "colorlight":   Colorlight,
++    "colorlight_i5":Colorlight_i5,
  
      # Altera/Intel
      "de0nano":      De0Nano,
-@@ -499,11 +535,16 @@ def main():
-         if board_name in ["arty", "arty_a7"]:
-             from litex_boards.platforms.arty import _sdcard_pmod_io
-             board.platform.add_extension(_sdcard_pmod_io)
-+        if board_name in ["colorlight"]:
-+            from litex_boards.platforms.colorlight_i5 import _sdcard_pmod_io
-+            board.platform.add_extension(_sdcard_pmod_io)
-+            from litex_boards.platforms.colorlight_i5 import _spi_pmod_io
-+            board.platform.add_extension(_spi_pmod_io)
- 
-         if "mmcm" in board.soc_capabilities:
-             soc.add_mmcm(2)
-         if "spiflash" in board.soc_capabilities:
--            soc.add_spi_flash(dummy_cycles=board.SPIFLASH_DUMMY_CYCLES)
-+            soc.add_spi_flash(mode="1x", dummy_cycles=board.SPIFLASH_DUMMY_CYCLES)
-             soc.add_constant("SPIFLASH_PAGE_SIZE", board.SPIFLASH_PAGE_SIZE)
-             soc.add_constant("SPIFLASH_SECTOR_SIZE", board.SPIFLASH_SECTOR_SIZE)
-         if "spisdcard" in board.soc_capabilities:
-diff --git a/soc_linux.py b/soc_linux.py
-index d3aa382..59f5c32 100644
---- a/soc_linux.py
-+++ b/soc_linux.py
-@@ -93,9 +93,9 @@ def SoCLinux(soc_cls, **kwargs):
-             "timer0":     1,
-         }}
-         mem_map = {**soc_cls.mem_map, **{
--            "ethmac":       0xb0000000, # len: 0x2000
--            "sdread":       0xb0002000, # len: 0x200
--            "sdwrite":      0xb0002200, # len: 0x200
-+            "ethmac":       0xb0000000, # len: 0x4000
-+            "sdread":       0xb0004000, # len: 0x200
-+            "sdwrite":      0xb0004200, # len: 0x200
-             "spiflash":     0xd0000000,
-             "csr":          0xf0000000,
-         }}
