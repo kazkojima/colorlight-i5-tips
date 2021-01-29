@@ -6,7 +6,7 @@
         #size-cells    = <1>;
 
         chosen {
-            bootargs = "mem=8M@0x40000000 rootwait console=liteuart earlycon=sbi root=/dev/nfs nfsroot=10.253.253.8:/srv/nfs,rsize=16384,wsize=4096 ethaddr=10:e2:d5:00:00:00 ip=dhcp init=/sbin/init swiotlb=32";
+            bootargs = "mem=8M@0x40000000 rootwait console=liteuart earlycon=sbi root=/dev/mmcblk0p2 init=/sbin/init swiotlb=32";
         };
 
         cpus {
@@ -77,13 +77,13 @@
 
             mac0: mac@f0005000 {
                 compatible = "litex,liteeth";
+		interrupt-parent = <&intc0>;
+		interrupts = <2>;
                 reg = <0xf0005000 0x7c>,
                       <0xf0004800 0x10>,
                       <0xb0000000 0x4000>;
                 tx-fifo-depth = <2>;
                 rx-fifo-depth = <2>;
-		interrupt-parent = <&intc0>;
-		interrupts = <2>;
 		mac-address = [10 e2 d5 00 00 00];
             };
 
@@ -98,7 +98,18 @@
                 };
             };
 
-            leds: gpio@f0003000 {
+            mmc0: mmc@f0005800 {
+                compatible = "litex,mmc";
+                reg = <
+                    0xf0005800 0x100
+                    0xf0006000 0x100
+                    0xf0006800 0x100
+                    0xf0007000 0x100>;
+                bus-width = <0x04>;
+                status = "okay";
+            };
+
+	    leds: gpio@f0003000 {
                 compatible = "litex,gpio";
                 reg = <0xf0003000 0x4>;
                 litex,direction = "out";

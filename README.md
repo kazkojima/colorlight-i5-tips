@@ -16,15 +16,21 @@ $ ./dapprog xxx.bit # Write configuration to the flash
 
 though the 2nd one fails because the flash is protected in shipping. See SPIFLASH below. If you follows the Tom's article, this problem can be avoided with "ecpdap".
 
+```
+$ ecpdap flash unprotect
+```
+
+See 'Programming a Bitstream into SPI flash' section of his article for details.
+For loading and flash writing,
+
+```
+$ ecpdap program xxx.bit # Configure with xxx.svf
+$ ecpdap flash xxx.bit   # Write configuration to the flash
+```
+
 ## LiteX
 
-[A trial litex-board platform/target definitions for colorlight i5](https://github.com/kazkojima/litex-boards/tree/colorlight_i5)
-
-[A trial litex adjustment for colorlight i5](https://github.com/kazkojima/litex/tree/colorlight_i5)
-
-The latter includes some new flash commands. They help you to clear block protection of spiflash which is set in shipping.
-
-![screenshot of LiteX BIOS](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/flash-cmd-added.jpg)
+Now [litex-board](https://github.com/litex-hub/litex-boards) has colorlight i5 board support. It uses [Adam Greig's ecpdap](https://github.com/adamgreig/ecpdap) as the bit stream loader written in Rust.
 
 For LiteX, see [Quick start guide of LiteX](https://github.com/enjoy-digital/litex#quick-start-guide).
 
@@ -34,22 +40,13 @@ $ chmod +x litex_setup.py
 $ ./litex_setup.py init install --user
 ```
 
-should prepare the original LiteX tree.
-
-Colorlight i5 support can be added with replacing litex-board and litex with the above colorlight_i5 branches:
-
-```
-$ mv litex-boards litex-boards-upstream
-$ git clone https://github.com/kazkojima/litex-boards.git -b colorlight_i5
-$ mv litex litex-upstream
-$ git clone https://github.com/kazkojima/litex.git -b colorlight_i5
-```
+should prepare the LiteX tree.
 
 After these steps,
 
 ```
 $ cd litex-boards/litex_boards/targets
-$ ./colorlight_i5.py --with-sdcard --with-spi --integrated-rom-size 0xc000 --l2-size 2048
+$ ./colorlight_i5.py --with-sdcard --integrated-rom-size 0xc000 --l2-size 2048
 ```
 
 for example, will generate .v and .lpf files in litex-boards/litex_boards/targets/build/colorlight_i5/gateware directory.
@@ -61,9 +58,26 @@ $ /bin/sh ./build_colorlight_i5.sh
 
 will build .svf and .bin stream files.
 
+With --build option
+
+```
+$ ./colorlight_i5.py --with-sdcard --with-spi --integrated-rom-size 0xc000 --l2-size 2048 --build
+```
+
+build_colorlight_i5.sh runs automatically. If ecpdap is installed already, --load option programs FPGA with the stream built
+
+```
+$ ./colorlight_i5.py --with-sdcard --with-spi --integrated-rom-size 0xc000 --l2-size 2048 --load
+```
+
+
 ## SPIFLASH
 
-[The start guide](https://github.com/wuxx/Colorlight-FPGA-Projects/blob/master/get-start.md) says that the SPI-Flash on i5 modules GD25Q16, is locked. You can free the lock with ecpdap or the new flash command added to LiteX BIOS.
+[The start guide](https://github.com/wuxx/Colorlight-FPGA-Projects/blob/master/get-start.md) says that the SPI-Flash on i5 modules GD25Q16, is locked. You can free the lock with ecpdap.
+
+Before ecpdap, I used a modified Litex Bios with a few new flash commands to unlock the flash. The patch for litex is [here](https://github.com/kazkojima/colorlight-i5-tips/blob/main/patches/litex-bios-new-flash-commands.patch) for the record. Perhaps, it may help as a tiny example to add new commands to LiteX bios.
+
+![screenshot of LiteX BIOS](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/flash-cmd-added.jpg)
 
 ```
 litex> flash_write_protect 0
@@ -85,9 +99,13 @@ will lock all blocks again.
 
 ## SDCARD
 
-I've tested DIGILENT MicroSD PMOD successfully.
+I've tested DIGILENT MicroSD PMOD.
 
 ![screenshot of LiteX BIOS](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/uSD-pmod.jpg)
+
+It seems that the pull-up is a bit weak to work with the higher clock. An added 1k pull-up register to MOSI/CMD line works for me.
+
+![added 1kohm pull-up register](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/uSD-pmod-pullup.jpg)
 
 ## Ethernet
 
@@ -95,7 +113,7 @@ Colorlight i5 has two Braodcom's B50612D gigabit ethernet transceiver chips. I m
 
 ![ethernet adaptor](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/i5ether-adaptor.jpg)
 
-netboot works with it, though a few tips are needed.
+netboot works with it.
 
 B50612D datasheet says that the pin 41 of the chip PHYA[0] determines the PHY Address of B50612D. It seems that the chip connected to ETH2_* connecter pins has PHYA[0] = 0 and the LiteX ether MAC works with this PHY. ~~ATM, the platform file defines this chip as the 2nd ether so as to match the connector pins.~~ The order of the two PHYs is swapped with the naming of the connectors on the board so to match with the configuration of their PHYA[0] pins. The default is "--eth-phy 0".
 
@@ -104,21 +122,6 @@ B50612D datasheet says that the pin 41 of the chip PHYA[0] determines the PHY Ad
 ```
 $ ./colorlight_i5.py --integrated-rom-size 0xc000 --l2-size 2048 --with-sdcard --with-ethernet
 ```
-
-One another tip to get Ethernet working on your ColorLite i5.
-
-B50612D datasheet:
-"The RGMII transmit timing can be adjusted, if needed, by software or hardware control. The TXD to GTXCLK delay time can be increased by approximately 1.9 ns by setting bit 9 of register 1Ch, shadow value 00011."
-
-TXD to GTXCLK delay is enabled by default. It looks that the ethernet packets sent from colorlight can't be seen by the other hosts with it.  Disabling it with
-
-```
-litex> mdio_write 0 0x1c 0x8c00
-```
-
-![screenshot of netboot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/netboot.png)
-
-Now it's added to the board specific bios initialization. There is no need to do it by hand. See the [litex-boards commit](https://github.com/kazkojima/litex-boards/commit/858b62292c69aa8452d939b01cabd68fab29449f) and the [litex commit](https://github.com/kazkojima/litex/commit/dd1009d3137074f0b2816b2644a6d930432210b2).
 
 ## Zephyr
 
@@ -166,27 +169,49 @@ You can try net samples with it.
 
 ## linux-on-litex-vexriscv
 
-Due to the 8MB memory limit, it's difficult to put the root filesystem on the RAM like other boards. Putting it on NFS or micro SD will be a good candidate.
+In the following sections, linux-on-litex-vexriscv HEAD and litex-hub/linux litex-rebase branch HEAD are assumed.
 
-The latter, making the micro SD the root FS, is partially successful. Using the litex-vexriscv-rebase branch of [litex's linux tree](https://github.com/litex-hub/linux.git), [a tiny patch for mmc](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-litex-vexriscv-rebase-mmc.patch) and [.config](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/defconfig-colorlight-i5), [linux-on-litex-vexriscv](https://github.com/litex-hub/linux-on-litex-vexriscv)
- with [colorlight i5 patch](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-on-litex-vexriscv-colorlight-i5.patch) has booted, though it's very slooooow.
+Due to the 8MB memory limit, it's difficult to put the root filesystem on the RAM like other boards. Putting it on NFS or micro SD will be a good candidate. Linux can boot on these two settings, though it's very slow. The main reason would be that there is not enough physical memory to keep a sufficient working set.
 
 Since we have only 8GB of memory, we need to change the memory map for the device table and emulator binaries. The patch in linux/ assumes rv32.dtb at 0x40780000 and opensbi.bin at 0x407c0000.
 There is a boot.json file in linux/ that matches this change.
 
+### sdcard root
+
+To make the micro SD the root FS, I'm using the litex-rebase branch of [litex's linux tree](https://github.com/litex-hub/linux.git), [a tiny patch for mmc](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-litex-vexriscv-rebase-mmc.patch) and [.config for mmc](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/defconfig-colorlight-i5-mmc) and [linux-on-litex-vexriscv](https://github.com/litex-hub/linux-on-litex-vexriscv).
+
+linux-on-litex-vexriscv includes some kernel patches required for litex.
+
+```
+$ for f in YOUR_linux-on-litex-vexriscv_PATH/buildroot/patches/linux/000[124]*.patch; do (cat $f | patch -p1); done
+```
+
+in the linux source directory will add these patches, ATM. Without them, the resulted kernel size is over 20GB!!
+
+Currently colorlight i5 sdcard support is experimental and isn't yet merged. [A tiny patch](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/linux-on-litex-vexriscv-mmc.patch) is needed for linux-on-litex-vexriscv.
+
+```
+$ cd YOUR_linux-on-litex-vexriscv_PATH
+$ cat linux-on-litex-vexriscv-mmc.patch | patch -p1
+$ ./make.py --board colorlight_i5 --build
+```
+
 ![screenshot of linux boot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/boot-on-sdcard.png)
 
-Too bad it doesn't work SDCard clock over 2MHz which causes "DMA timeout" errors ATM.
+### Ethernet/nfsroot
 
-### Ethernet interrupt
-
-DT for ethernet is [here](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/rv32-eth.dts). linux-on-litex-vexriscv HEAD is assumed.
+Almost similar to sdcard root, except no mmc patch for kernel isn't required and [DT for ethernet/nfsroot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/rv32-eth.dts)  [.config for nfsroot](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/defconfig-colorlight-i5-eth) have worked. 
 
 ~~### SDRAM issue on linux-on-litex-vexriscv HEAD~~
 
 This is solved with [commit dee4331](https://github.com/litex-hub/linux-on-litex-vexriscv/commit/dee4331dc39124bca37f8f765ac20184ad447ae4)!
 
 ## History
+
+### Updates (Jan 29 2021)
+
+* Update for merging colorlight i5 board support.
+* uSD-pmod pull-up register issue.
 
 ### Updates (Jan 27 2021)
 

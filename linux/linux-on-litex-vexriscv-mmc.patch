@@ -1,0 +1,33 @@
+diff --git a/make.py b/make.py
+index 220e216..1752c06 100755
+--- a/make.py
++++ b/make.py
+@@ -362,7 +362,7 @@ class ECPIX5(Board):
+ class Colorlight_i5(Board):
+     soc_kwargs = {
+         "sys_clk_freq": int(50e6),     # 48MHz default.
+-        "integrated_rom_size": 0xa000, # Reduce integrated_rom_size.
++        "integrated_rom_size": 0xc000, # Reduce integrated_rom_size.
+         "l2_size"    :  2048, # Use Wishbone and L2 for memory accesses.
+     }
+     def __init__(self):
+@@ -371,6 +371,8 @@ class Colorlight_i5(Board):
+             # Communication
+             "serial",
+             "ethernet",
++            # Storage
++            "sdcard",
+         }, bitstream_ext=".svf")
+ 
+ #---------------------------------------------------------------------------------------------------
+@@ -542,6 +544,10 @@ def main():
+             from litex_boards.platforms.arty import _sdcard_pmod_io
+             board.platform.add_extension(_sdcard_pmod_io)
+ 
++        if board_name in ["colorlight_i5"]:
++            from litex_boards.platforms.colorlight_i5 import _sdcard_pmod_io
++            board.platform.add_extension(_sdcard_pmod_io)
++
+         if board_name in ["orangecrab"]:
+             from litex_boards.platforms.orangecrab import feather_i2c
+             board.platform.add_extension(feather_i2c)

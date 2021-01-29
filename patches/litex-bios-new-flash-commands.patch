@@ -1,0 +1,161 @@
+diff --git a/litex/soc/software/bios/cmds/cmd_spiflash.c b/litex/soc/software/bios/cmds/cmd_spiflash.c
+index 1038f7a7..1a969099 100644
+--- a/litex/soc/software/bios/cmds/cmd_spiflash.c
++++ b/litex/soc/software/bios/cmds/cmd_spiflash.c
+@@ -73,3 +73,68 @@ static void flash_erase_handler(int nb_params, char **params)
+ define_command(flash_erase, flash_erase_handler, "Erase whole flash", SPIFLASH_CMDS);
+ #endif
+ 
++/**
++ * Command "flash_readid"
++ *
++ * Read ID
++ *
++ */
++#if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
++static void flash_readid_handler(int nb_params, char **params)
++{
++    unsigned int id;
++
++    id = flash_readid();
++    printf("Flash id %08x\n", id);
++}
++
++define_command(flash_readid, flash_readid_handler, "Read flash ID", SPIFLASH_CMDS);
++#endif
++
++/**
++ * Command "flash_readsr"
++ *
++ * Read stauts register
++ *
++ */
++#if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
++static void flash_readsr_handler(int nb_params, char **params)
++{
++    unsigned char sr0, sr1;
++
++    sr0 = flash_readsr(0);
++    sr1 = flash_readsr(1);
++    printf("Status %02x%02x\n", sr1, sr0);
++}
++
++define_command(flash_readsr, flash_readsr_handler, "Read status register", SPIFLASH_CMDS);
++#endif
++
++/**
++ * Command "flash_write_protect"
++ *
++ * Write block protect bits of status register
++ *
++ */
++#if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
++static void flash_write_protect_handler(int nb_params, char **params)
++{
++    unsigned int prot;
++    char *c;
++
++    if (nb_params != 1) {
++	printf("flash_write_protect <bits>");
++	return;
++    }
++
++    prot = strtoul(params[0], &c, 0);
++    if (*c != 0 || prot > 31) {
++	printf("Incorrect bits");
++	return;
++    }
++
++    flash_write_protect(prot << 2);
++}
++
++define_command(flash_write_protect, flash_write_protect_handler, "Write protect bits (0-31)", SPIFLASH_CMDS);
++#endif
+diff --git a/litex/soc/software/libbase/spiflash.c b/litex/soc/software/libbase/spiflash.c
+index c1681c08..b8b6930e 100644
+--- a/litex/soc/software/libbase/spiflash.c
++++ b/litex/soc/software/libbase/spiflash.c
+@@ -10,6 +10,9 @@
+ #define WREN_CMD         0x06
+ #define CE_CMD           0xc7
+ #define SE_CMD           0xd8
++#define WRSR_CMD         0x01
++#define RDSR1_CMD        0x35
++#define RDID_CMD         0x9f
+ 
+ #define BITBANG_CLK         (1 << 1)
+ #define BITBANG_CS_N        (1 << 2)
+@@ -156,4 +159,73 @@ void write_to_flash(unsigned int addr, const unsigned char *c, unsigned int len)
+    }
+ }
+ 
++unsigned int flash_readid(void)
++{
++    int i;
++    unsigned int id = 0;
++
++    spiflash_bitbang_en_write(1);
++
++    flash_write_byte(RDID_CMD);
++    spiflash_bitbang_write(BITBANG_DQ_INPUT);
++    for(i = 0; i < 24; i++) {
++	id <<= 1;
++	spiflash_bitbang_write(BITBANG_CLK | BITBANG_DQ_INPUT);
++	id |= spiflash_miso_read();
++	spiflash_bitbang_write(0           | BITBANG_DQ_INPUT);
++    }
++    spiflash_bitbang_write(0);
++    spiflash_bitbang_write(BITBANG_CS_N);
++
++    spiflash_bitbang_en_write(0);
++
++    return id;
++}
++
++unsigned char flash_readsr(int hi)
++{
++    int i;
++    unsigned char sr = 0;
++
++    spiflash_bitbang_en_write(1);
++
++    flash_write_byte(hi ? RDSR1_CMD : RDSR_CMD);
++    spiflash_bitbang_write(BITBANG_DQ_INPUT);
++    for(i = 0; i < 8; i++) {
++	sr <<= 1;
++	spiflash_bitbang_write(BITBANG_CLK | BITBANG_DQ_INPUT);
++	sr |= spiflash_miso_read();
++	spiflash_bitbang_write(0           | BITBANG_DQ_INPUT);
++    }
++    spiflash_bitbang_write(0);
++    spiflash_bitbang_write(BITBANG_CS_N);
++
++    spiflash_bitbang_en_write(0);
++
++    return sr;
++}
++
++unsigned int flash_write_protect(unsigned int bp)
++{
++    int i;
++    unsigned int id = 0;
++
++    spiflash_bitbang_en_write(1);
++    wait_for_device_ready();
++
++    flash_write_byte(WREN_CMD);
++    spiflash_bitbang_write(BITBANG_CS_N);
++
++    flash_write_byte(WRSR_CMD);
++    flash_write_byte(bp & 0x7c);
++    flash_write_byte(0);
++
++    spiflash_bitbang_write(BITBANG_CS_N);
++
++    wait_for_device_ready();
++    spiflash_bitbang_en_write(0);
++
++    return id;
++}
++
+ #endif /* CSR_SPIFLASH_BASE && SPIFLASH_PAGE_SIZE */
