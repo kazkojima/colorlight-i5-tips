@@ -206,7 +206,25 @@ Almost similar to sdcard root, except no mmc patch for kernel isn't required and
 
 This is solved with [commit dee4331](https://github.com/litex-hub/linux-on-litex-vexriscv/commit/dee4331dc39124bca37f8f765ac20184ad447ae4)!
 
+### OpenSBI
+
+A tiny patch [opensbi-config-fixmap.patch](https://github.com/kazkojima/colorlight-i5-tips/blob/main/linux/opensbi-config-fixmap.patch) for OpenSBI is needed so as to match 8MB RAM.
+
+```
+$ clone https://github.com/litex-hub/opensbi --branch 0.8-linux-on-litex-vexriscv
+$ cd opensbi
+$ cat opensbi-config-fixmap.patch | patch -p1
+$ make CROSS_COMPILE=riscv32-unknown-elf- PLATFORM=litex/vexriscv
+$ cp build/platform/litex/vexriscv/firmware/fw_jump.bin opensbi.bin
+```
+
+will give opensbi.bin that works on the 8MB memory map.
+
 ## History
+
+### Updates (Jan 30 2021)
+
+* Add an OpenSBI subsection.
 
 ### Updates (Jan 29 2021)
 

@@ -1,0 +1,19 @@
+diff --git a/platform/litex/vexriscv/config.mk b/platform/litex/vexriscv/config.mk
+index 5b89a1d..5c96c42 100644
+--- a/platform/litex/vexriscv/config.mk
++++ b/platform/litex/vexriscv/config.mk
+@@ -20,11 +20,11 @@ PLATFORM_RISCV_ISA = rv32ima
+ PLATFORM_RISCV_CODE_MODEL = medany
+ 
+ # Blobs to build
+-FW_TEXT_START=0x40F00000
++FW_TEXT_START=0x407C0000
+ FW_DYNAMIC=y
+ FW_JUMP=y
+ FW_JUMP_ADDR=0x40000000
+-FW_JUMP_FDT_ADDR=0x40EF0000
++FW_JUMP_FDT_ADDR=0x40780000
+ FW_PAYLOAD=y
+ FW_PAYLOAD_OFFSET=0x40000000
+-FW_PAYLOAD_FDT_ADDR=0x40EF0000
++FW_PAYLOAD_FDT_ADDR=0x40780000
