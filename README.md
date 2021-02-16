@@ -165,6 +165,17 @@ I've pushed [zephyr-rtos branch with modified DTS and default configs for colorl
 
 You can try net samples with it.
 
+```
+$ cd zephyrproject/zephyr/samples/net/telnet
+$ mkdir build
+$ cd build
+$ cmake -DBOARD=litex_vexriscv ..
+$ make menuconfig # optional
+$ make
+```
+
+makes zephyr/zephyr.bin binary which can be used as a litex boot.bin.
+
 ![screenshot of samples/net/telnet](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/telnet-app.png)
 
 ## linux-on-litex-vexriscv
