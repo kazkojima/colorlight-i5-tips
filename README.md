@@ -24,8 +24,9 @@ See 'Programming a Bitstream into SPI flash' section of his article for details.
 For loading and flash writing,
 
 ```
-$ ecpdap program xxx.bit # Configure with xxx.svf
-$ ecpdap flash xxx.bit   # Write configuration to the flash
+$ ecpdap program xxx.bit       # Configure with xxx.svf
+$ ecpdap flash erase           # Erase flash
+$ ecpdap flash write xxx.bit   # Write configuration to the flash
 ```
 
 ## LiteX
@@ -232,6 +233,11 @@ $ cp build/platform/litex/vexriscv/firmware/fw_jump.bin opensbi.bin
 will give opensbi.bin that works on the 8MB memory map.
 
 ## History
+
+### Updates (Feb 16 2021)
+
+* Fix ecpdap command to write flash.
+* Add example command lines to build a zephyr sample.
 
 ### Updates (Jan 30 2021)
 
