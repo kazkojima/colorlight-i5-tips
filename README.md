@@ -76,28 +76,6 @@ $ ./colorlight_i5.py --with-sdcard --with-spi --integrated-rom-size 0xc000 --l2-
 
 [The start guide](https://github.com/wuxx/Colorlight-FPGA-Projects/blob/master/get-start.md) says that the SPI-Flash on i5 modules GD25Q16, is locked. You can free the lock with ecpdap.
 
-Before ecpdap, I used a modified Litex Bios with a few new flash commands to unlock the flash. The patch for litex is [here](https://github.com/kazkojima/colorlight-i5-tips/blob/main/patches/litex-bios-new-flash-commands.patch) for the record. Perhaps, it may help as a tiny example to add new commands to LiteX bios.
-
-![screenshot of LiteX BIOS](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/flash-cmd-added.jpg)
-
-```
-litex> flash_write_protect 0
-```
-
-should clear all block protection of GD25B16C flash chip. The modified .bit and .svf of LiteX are [here](https://github.com/kazkojima/colorlight-i5-tips/streams). If it works,
-
-```
-litex> flash_erase
-```
-
-erases GD25B16C and you can reconfigure the board with "dapprog xxx.bit".
-
-```
-litex> flash_write_protect 7
-```
-
-will lock all blocks again.
-
 ## SDCARD
 
 I've tested DIGILENT MicroSD PMOD.
@@ -122,6 +100,40 @@ B50612D datasheet says that the pin 41 of the chip PHYA[0] determines the PHY Ad
 
 ```
 $ ./colorlight_i5.py --integrated-rom-size 0xc000 --l2-size 2048 --with-sdcard --with-ethernet
+```
+
+## HDMI
+
+The build option "--with-video-framebuffer" (resp. "--with-video-terminal") makes the experimental support for video frame buffer (resp. video terminal) enable. The configuration of the HDMI output pins on the Muse-lab development board are assumed.
+
+![video frame buffer](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/video-fb.png)
+
+![video terminal](https://github.com/kazkojima/colorlight-i5-tips/blob/main/images/video-terminal.png)
+
+--with-video-framebuffer and --with-video-terminal will consume some RAM blocks of ECP5. If these options are used with --with-ethernet, for example, the build may fail due to the shortage of BRAM(DP16KD). One could reduce the usage of BRAM with specifying the lower values of integrated-sram-size and l2-size. Here are some examples.
+
+```
+$ ./colorlight_i5.py --with-ethernet --with-video-framebuffer --integrated-rom-size 0xa000 --integrated-sram-size 0x1000 --l2-size 2048 --build --load
+
+$ ./colorlight_i5.py --with-ethernet --with-video-terminal --integrated-rom-size 0xa000 --integrated-sram-size 0x1000 --l2-size 1024 --build --load
+```
+
+The video fame buffer has a data skew issue on colorlight i5 ATM. It can be avoided temporarily with the one liner below:
+
+```
+diff --git a/litex_boards/targets/colorlight_i5.py b/litex_boards/targets/colorlight_i5.py
+index 58aacfc..f081f43 100755
+--- a/litex_boards/targets/colorlight_i5.py
++++ b/litex_boards/targets/colorlight_i5.py
+@@ -150,7 +150,7 @@ class BaseSoC(SoCCore):
+                 size                    = kwargs.get("max_sdram_size", 0x40000000),
+                 l2_cache_size           = kwargs.get("l2_size", 8192),
+                 l2_cache_min_data_width = kwargs.get("min_l2_data_width", 128),
+-                l2_cache_reverse        = True
++                l2_cache_reverse        = False if with_video_framebuffer else True
+             )
+ 
+         # Ethernet / Etherbone ---------------------------------------------------------------------
 ```
 
 ## Zephyr
@@ -232,7 +244,16 @@ $ cp build/platform/litex/vexriscv/firmware/fw_jump.bin opensbi.bin
 
 will give opensbi.bin that works on the 8MB memory map.
 
+## Litescope
+
+TODO
+
 ## History
+
+### Updates (Mar 26 2021)
+
+* Add HDMI section.
+* Remove the old spiflash stuff.
 
 ### Updates (Feb 16 2021)
 
